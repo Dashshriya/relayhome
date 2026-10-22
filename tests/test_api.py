@@ -87,3 +87,22 @@ def test_plan_rejects_too_short_request():
     response = client.post("/api/plan", json={"message": "hi"})
 
     assert response.status_code == 422
+
+
+
+def test_mcp_tool_discovery_returns_live_tool_metadata(monkeypatch):
+    async def fake_discover():
+        return [{
+            "name": "list_open_tasks",
+            "description": "List open and in-progress household coordination tasks.",
+            "input_schema": {"type": "object", "properties": {}},
+        }]
+
+    monkeypatch.setattr(api, "discover_mcp_tools", fake_discover)
+    response = client.get("/api/mcp/tools")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["transport"] == "Streamable HTTP"
+    assert payload["server"] == "RelayHome Care Coordination"
+    assert payload["tools"][0]["name"] == "list_open_tasks"
