@@ -9,6 +9,7 @@ This is an early hackathon prototype. It uses fictional household data and a sma
 - Describe a coordination need, such as preparing for an appointment.
 - Review the suggested tasks and check-in before approving them.
 - See saved tasks and recent activity in the dashboard.
+- Open **MCP tools** to discover the tools actually advertised by the running Streamable HTTP server.
 - Mark a task complete and see the activity trail update.
 
 ## How it is built
@@ -59,7 +60,7 @@ python -m pytest -q
 npm run build
 ```
 
-The planner tests are in place. The full MCP/browser workflow still needs to be checked in the target environment before this should be presented as a finished product.
+For an end-to-end check, start the MCP server, the FastAPI service, and Vite in separate terminals. Confirm that the MCP tools panel changes to **Connected**, shows the tools returned by `tools/list`, and that drafting, approving, and completing a task update the activity log.
 
 ## Scope and safety
 
@@ -70,4 +71,8 @@ The planner tests are in place. The full MCP/browser workflow still needs to be 
 
 ## Hackathon notes
 
-The project is being developed for the Alexa+ track as a developer-built MCP/web prototype. It is not connected to an Alexa+ device or a partner-only console. Any additional open-source mini-challenge requires a separate qualifying contribution and its own submission evidence.
+The project targets the Alexa+ track as a developer-built MCP/web prototype. It is not connected to an Alexa+ device or a partner-only console; the demo uses the simulated-experience path. The dashboard's MCP panel discovers the running server's tools over Streamable HTTP and reports connection failures without pretending the server is online.
+
+### Submission-window update
+
+This branch adds a live MCP tool-discovery endpoint (`GET /api/mcp/tools`), a dashboard inspector for the server's `tools/list` response, and a regression test for the endpoint. Keep the Devpost demo focused on this working integration and the human approval step before tasks are saved.

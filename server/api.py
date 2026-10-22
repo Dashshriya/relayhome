@@ -4,16 +4,20 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 from server.planner import propose_steps
 
 MCP_URL = os.getenv("MCP_URL", "http://127.0.0.1:8000/mcp")
+DIST_DIR = Path(__file__).resolve().parent.parent / "dist"
 app = FastAPI(title="RelayHome API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
@@ -22,6 +26,11 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type"],
 )
+
+# In production, the same service serves the built React app and the API.
+# During local development Vite runs separately, so the dist directory may not exist.
+if (DIST_DIR / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="assets")
 
 
 class PlanRequest(BaseModel):
@@ -53,6 +62,36 @@ async def call_mcp_tool(name: str, arguments: dict[str, Any] | None = None) -> A
                 return parsed
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"MCP server unavailable or tool failed: {exc}") from exc
+
+
+async def discover_mcp_tools() -> list[dict[str, Any]]:
+    """Discover the tools advertised by the live MCP server over Streamable HTTP."""
+    try:
+        async with streamablehttp_client(MCP_URL) as (read_stream, write_stream, _):
+            async with ClientSession(read_stream, write_stream) as session:
+                await session.initialize()
+                result = await session.list_tools()
+                return [
+                    {
+                        "name": tool.name,
+                        "description": tool.description or "",
+                        "input_schema": tool.inputSchema,
+                    }
+                    for tool in result.tools
+                ]
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"MCP tool discovery failed: {exc}") from exc
+
+
+@app.get("/api/mcp/tools")
+async def mcp_tools() -> dict:
+    """Expose live MCP tool discovery for the Alexa+ simulation and protocol demo."""
+    tools = await discover_mcp_tools()
+    return {
+        "server": "RelayHome Care Coordination",
+        "transport": "Streamable HTTP",
+        "tools": tools,
+    }
 
 
 @app.get("/api/health")
@@ -115,3 +154,29 @@ async def execute(request: ExecuteRequest) -> dict:
 @app.post("/api/complete/{task_id}")
 async def complete(task_id: str) -> dict:
     return await call_mcp_tool("complete_task", {"task_id": task_id})
+
+
+@app.get("/", include_in_schema=False)
+async def frontend_index() -> FileResponse:
+    """Serve the built frontend when deployed as a single web service."""
+    index_file = DIST_DIR / "index.html"
+    if not index_file.is_file():
+        raise HTTPException(status_code=404, detail="Frontend build not found.")
+    return FileResponse(index_file)
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+async def frontend_routes(full_path: str) -> FileResponse:
+    """Serve frontend assets and SPA routes without swallowing unknown API routes."""
+    if full_path == "api" or full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API route not found.")
+    root = DIST_DIR.resolve()
+    candidate = (DIST_DIR / full_path).resolve()
+    if candidate != root and root not in candidate.parents:
+        raise HTTPException(status_code=404, detail="Not found.")
+    if candidate.is_file():
+        return FileResponse(candidate)
+    index_file = DIST_DIR / "index.html"
+    if index_file.is_file():
+        return FileResponse(index_file)
+    raise HTTPException(status_code=404, detail="Frontend build not found.")

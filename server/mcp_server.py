@@ -1,4 +1,4 @@
-"""MCP tools for the RelayHome household coordination demo."""
+""""MCP tools for the RelayHome household coordination demo."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -109,4 +109,8 @@ def list_checkins() -> list[dict]:
 
 
 if __name__ == "__main__":
-    mcp.run(transport="streamable-http", host="127.0.0.1", port=8000)
+    # FastMCP reads the bind address and port from its settings; run() accepts
+    # the transport only. Bind locally because FastAPI proxies MCP requests.
+    mcp.settings.host = "127.0.0.1"
+    mcp.settings.port = 8000
+    mcp.run(transport="streamable-http")
