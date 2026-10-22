@@ -9,6 +9,9 @@ A human-approved household care coordinator that turns everyday requests into re
 ## Primary track
 Alexa+ — simulated web experience using a self-hosted MCP server. Do not claim a physical Alexa+ device or partner-console connection.
 
+- **Primary code URL:** https://github.com/Dashshriya/relayhome/tree/amazon-hackathon/relayhome-mcp-inspector
+- **Review PR:** https://github.com/Dashshriya/relayhome/pull/1
+
 ## Project description
 Family care depends on small acts of coordination: confirming an appointment, preparing what someone needs, arranging transport, and remembering to check in. When these actions are scattered across notes and conversations, the coordination burden often falls on one person.
 
