@@ -55,6 +55,36 @@ async def call_mcp_tool(name: str, arguments: dict[str, Any] | None = None) -> A
         raise HTTPException(status_code=503, detail=f"MCP server unavailable or tool failed: {exc}") from exc
 
 
+async def discover_mcp_tools() -> list[dict[str, Any]]:
+    """Discover the tools advertised by the live MCP server over Streamable HTTP."""
+    try:
+        async with streamablehttp_client(MCP_URL) as (read_stream, write_stream, _):
+            async with ClientSession(read_stream, write_stream) as session:
+                await session.initialize()
+                result = await session.list_tools()
+                return [
+                    {
+                        "name": tool.name,
+                        "description": tool.description or "",
+                        "input_schema": tool.inputSchema,
+                    }
+                    for tool in result.tools
+                ]
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"MCP tool discovery failed: {exc}") from exc
+
+
+@app.get("/api/mcp/tools")
+async def mcp_tools() -> dict:
+    """Expose live MCP tool discovery for the Alexa+ simulation and protocol demo."""
+    tools = await discover_mcp_tools()
+    return {
+        "server": "RelayHome Care Coordination",
+        "transport": "Streamable HTTP",
+        "tools": tools,
+    }
+
+
 @app.get("/api/health")
 async def health() -> dict:
     try:
