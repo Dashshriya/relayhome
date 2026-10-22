@@ -16,6 +16,12 @@ function App() {
   const [mcpStatus, setMcpStatus] = useState('checking');
   const [mcpLoading, setMcpLoading] = useState(false);
   const [mcpError, setMcpError] = useState('');
+  const [activeSection, setActiveSection] = useState('overview');
+
+  function navigateTo(id) {
+    setActiveSection(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   async function loadOverview() {
     try {
@@ -100,12 +106,12 @@ function App() {
     <aside className="sidebar">
       <div className="brand"><span className="brand-icon"><HeartHandshake size={21}/></span><span>RelayHome<small>CARE, COORDINATED</small></span></div>
       <div className="household"><Users size={16}/><span><small>HOUSEHOLD</small><strong>{context.household_name || 'Demo household'}</strong></span></div>
-      <nav><span className="nav-heading">WORKSPACE</span><a className="nav-active"><ClipboardList size={17}/> Overview</a><a href="#planner"><HeartHandshake size={17}/> Care plan</a><a href="#mcp-tools"><Activity size={17}/> MCP tools</a><a href="#activity"><Activity size={17}/> Activity</a></nav>
+      <nav aria-label="Workspace navigation"><span className="nav-heading">WORKSPACE</span><a href="#overview" onClick={e => { e.preventDefault(); navigateTo("overview"); }} className={activeSection === "overview" ? "nav-active" : ""}><ClipboardList size={17}/> Overview</a><a href="#planner" onClick={e => { e.preventDefault(); navigateTo("planner"); }} className={activeSection === "planner" ? "nav-active" : ""}><HeartHandshake size={17}/> Care plan</a><a href="#mcp-tools" onClick={e => { e.preventDefault(); navigateTo("mcp-tools"); }} className={activeSection === "mcp-tools" ? "nav-active" : ""}><Activity size={17}/> MCP tools</a><a href="#activity" onClick={e => { e.preventDefault(); navigateTo("activity"); }} className={activeSection === "activity" ? "nav-active" : ""}><Activity size={17}/> Activity</a></nav>
       <div className="privacy"><ShieldCheck size={18}/><strong>Nothing happens without you.</strong><p>Review every plan before tasks are added. This demo uses fictional household data.</p></div>
       <div className="sidebar-foot">A LITTLE MORE IN SYNC.</div>
     </aside>
 
-    <main className="main">
+    <main className="main" id="overview">
       <header className="topbar"><span>Household / Overview</span><span className="demo-pill"><span/> LOCAL DEMO</span></header>
       <section className="welcome">
         <div><p className="eyebrow">YOUR HOUSEHOLD AT A GLANCE</p><h1>Good to have you here.</h1><p className="subhead">Keep the small things moving, together.</p></div>
@@ -145,7 +151,7 @@ function App() {
             <p className="safety-note">{plan.safety_note}</p>
             <div className="draft-actions"><button className="quiet-button" onClick={() => setPlan(null)} disabled={busy}>Discard</button><button className="primary" onClick={approvePlan} disabled={busy}>{busy ? 'Saving…' : 'Approve and save'}</button></div>
           </div>}
-          <div className="suggestion" onClick={() => setMessage(demoPrompt)} role="button" tabIndex="0" onKeyDown={e => e.key === 'Enter' && setMessage(demoPrompt)}><span>TRY THIS</span><p>“Help me get ready for an appointment tomorrow.”</p><span className="suggestion-arrow">↗</span></div>
+          <button type="button" className="suggestion" onClick={() => { setMessage(demoPrompt); navigateTo("planner"); document.getElementById("request")?.focus({ preventScroll: true }); }}><span>TRY THIS PROMPT</span><p>“Help me get ready for an appointment tomorrow.”</p><span className="suggestion-arrow">Use example ↗</span></button>
         </section>
       </div>
 
@@ -174,7 +180,7 @@ function App() {
       <section className="panel activity-panel" id="activity"><div className="panel-heading"><div><p className="eyebrow">A RECORD OF WHAT CHANGED</p><h2>Recent activity</h2></div><Activity size={19} className="muted-icon"/></div>
         {activity.length ? <div className="activity-list">{activity.slice(0, 5).map((item, i) => <article className="activity-item" key={i}><span className="activity-mark"><Check size={13}/></span><div><strong>{item.event}</strong><p>{item.detail}</p></div><time>{item.time}</time></article>)}</div> : <p className="empty">Updates will appear here as tasks change.</p>}
       </section>
-      <footer><span>RELAYHOME · EARLY PROTOTYPE</span><span>Fictional data. No messages sent. No medical advice.</span></footer>
+      <footer><span>RELAYHOME · EARLY PROTOTYPE</span><button className="footer-link" type="button" onClick={() => navigateTo("overview")}>Back to top ↑</button><span>Fictional data. No messages sent. No medical advice.</span></footer>
     </main>
   </div>;
 }
