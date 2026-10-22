@@ -46,9 +46,21 @@ Edit this feedback to reflect your real onboarding and test experience before su
 - **Workaround:** Show actual MCP session/tool discovery and approved tool calls through the web simulation.
 - **Suggestion:** Provide a sandboxed Alexa+ test endpoint or temporary partner-preview access for hackathon participants.
 
+## Mini-challenge entry: Open Source
+
+- **Mini-challenge:** Open Source
+- **Contribution URL:** https://github.com/Dashshriya/crisismesh/tree/opensource-mcp-streamable-http-smokecheck/mcp-streamable-http-smokecheck
+- **Pull request:** https://github.com/Dashshriya/crisismesh/pull/2
+- **Repository URL:** https://github.com/Dashshriya/crisismesh
+- **GitHub username:** Dashshriya
+- **Description:** Added a separate MIT-licensed command-line utility that initializes an MCP Streamable HTTP session, lists the tools advertised by a server, prints tool schemas, and can optionally call a discovered tool. It reports connection failures with a non-zero exit code. The utility is separate from RelayHome, which is the primary Alexa+ track submission.
+
+The branch/PR URLs are live but the contribution is not merged. Verify the folder is public and the code can be run before submitting these details.
+
 ## Before submission
-- Run `python -m pytest -q` and `npm run build`.
+- Run `python -m pytest -q` and `npm run build` for RelayHome.
 - Start the MCP server, FastAPI, and Vite frontend; confirm the MCP panel says Connected and lists live tools.
 - Draft a plan, inspect it, approve it, then show the updated task and activity list.
+- Verify the separate smokecheck utility against a test MCP server.
 - Record a public English video under 3 minutes.
 - Do not claim AWS Builder eligibility unless a qualifying AWS service/tool was actually integrated and documented.
