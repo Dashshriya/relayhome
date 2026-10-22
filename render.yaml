@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: relayhome-demo
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: amazon-hackathon/relayhome-mcp-inspector
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: MCP_URL
+        value: http://127.0.0.1:8000/mcp
