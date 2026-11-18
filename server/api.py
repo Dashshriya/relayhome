@@ -8,7 +8,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 from server.planner import propose_steps
@@ -30,6 +30,38 @@ class PlanRequest(BaseModel):
 
 class ExecuteRequest(BaseModel):
     steps: list[dict[str, Any]] = Field(min_length=1, max_length=8)
+
+    @field_validator("steps")
+    @classmethod
+    def validate_steps(cls, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        for step in steps:
+            if not isinstance(step, dict):
+                raise ValueError("Each approved step must be an object.")
+
+            kind = step.get("type")
+            if kind == "task":
+                title = step.get("title")
+                if not isinstance(title, str) or not title.strip() or len(title.strip()) > 140:
+                    raise ValueError("Task titles must contain 1–140 characters.")
+                if step.get("category", "Other") not in {
+                    "Appointment", "Transport", "Preparation", "Check-in", "Errands", "Other"
+                }:
+                    raise ValueError("Unsupported task category.")
+                if step.get("assignee", "Unassigned") not in {"Unassigned", "Alex", "Jordan", "Elena"}:
+                    raise ValueError("Unsupported household assignee.")
+                if step.get("priority", "Medium") not in {"Low", "Medium", "High"}:
+                    raise ValueError("Unsupported task priority.")
+            elif kind == "checkin":
+                if step.get("person", "Elena") not in {"Elena", "Alex", "Jordan"}:
+                    raise ValueError("Unsupported household member.")
+                when = step.get("when", "Tomorrow")
+                if not isinstance(when, str) or not when.strip() or len(when) > 100:
+                    raise ValueError("Check-in time must contain 1–100 characters.")
+                if step.get("method", "Call") not in {"Call", "Text", "In-person"}:
+                    raise ValueError("Unsupported check-in method.")
+            else:
+                raise ValueError("Unsupported plan step type.")
+        return steps
 
 
 async def call_mcp_tool(name: str, arguments: dict[str, Any] | None = None) -> Any:
