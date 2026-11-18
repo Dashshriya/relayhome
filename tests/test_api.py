@@ -79,11 +79,24 @@ def test_execute_records_each_approved_step_through_mcp(monkeypatch):
 def test_execute_rejects_unsupported_step_type():
     response = client.post("/api/execute", json={"steps": [{"type": "message"}]})
 
-    assert response.status_code == 400
-    assert response.json()["detail"] == "Unsupported plan step type."
+    assert response.status_code == 422
 
 
 def test_plan_rejects_too_short_request():
     response = client.post("/api/plan", json={"message": "hi"})
+
+    assert response.status_code == 422
+
+
+
+def test_execute_rejects_empty_task_title_before_mcp(monkeypatch):
+    async def should_not_call_mcp(name, arguments=None):
+        raise AssertionError("Invalid payload must be rejected before MCP is called.")
+
+    monkeypatch.setattr(api, "call_mcp_tool", should_not_call_mcp)
+    response = client.post(
+        "/api/execute",
+        json={"steps": [{"type": "task", "title": "   "}]},
+    )
 
     assert response.status_code == 422
